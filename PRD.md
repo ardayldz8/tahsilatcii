@@ -57,29 +57,35 @@
 - [ ] Vercel deploy
 
 ### FAZ 2: Otomatik Hatirlatma Motoru (Hafta 3-4)
-- [ ] WhatsApp Business API entegrasyonu
-- [ ] Netgsm SMS API entegrasyonu
-- [ ] Resend e-posta entegrasyonu
-- [ ] Hatirlatma kurallari motoru (vade oncesi/gunu/sonrasi)
-- [ ] Upstash Queue + Vercel Cron ile zamanlanmis gonderim
-- [ ] Hatirlatma gecmisi ve durum takibi
+- [x] Hatirlatma kurallari motoru (vade oncesi/gunu/sonrasi + 2. hatirlatma)
+- [x] Vercel Cron ile zamanlanmis gonderim (her gun 09:00)
+- [x] Hatirlatma gecmisi sayfasi (/hatirlatmalar)
+- [x] Hatirlatma ayarlari (zamanlama, kanallar, ozel mesaj sablonlari)
+- [x] Mesajlasma altyapisi (WhatsApp/SMS/Email abstraction)
+- [x] WhatsApp link-based hatirlatma (Business API hazir, key bekleniyor)
+- [x] Netgsm SMS API entegrasyonu (key bekleniyor)
+- [x] Resend e-posta entegrasyonu (key bekleniyor)
 
 ### FAZ 3: Odeme ve Abonelik (Hafta 5)
-- [ ] iyzico abonelik entegrasyonu
-- [ ] Fiyatlandirma planlari (Ucretsiz / Esnaf 99TL / Usta 199TL)
-- [ ] Abonelik yonetimi
+- [x] iyzico abonelik entegrasyonu (REST API ile Checkout Form)
+- [x] Fiyatlandirma planlari sayfasi (Ucretsiz / Esnaf 99TL / Usta 199TL)
+- [x] Plan limitleri kontrolu (musteri siniri, hatirlatma siniri)
+- [x] Abonelik bilgi bileseni (dashboard'da kullanim durumu)
+- [x] Odeme callback ve plan guncelleme API'leri
+- [x] Payments tablosu ve RLS politikalari
 
 ### FAZ 4: Gelismis Ozellikler (Hafta 6-7)
-- [ ] Dashboard analitikleri
-- [ ] Fatura fotografi yukleme + OCR
-- [ ] Toplu fatura girisi (CSV)
-- [ ] Ozellestirilabilir mesaj sablonlari
+- [x] Dashboard analitikleri (aylik gelir grafigi, fatura durum pastasi, tahsilat orani, en buyuk musteriler)
+- [x] Fatura fotografi yukleme (Supabase Storage, kamera + dosya destegi)
+- [x] Toplu fatura girisi (CSV import, musteri eslestirme, onizleme + dogrulama)
+- [x] Ozellestirilabilir mesaj sablonlari (5 hatirlatma tipi, degisken ekleme, varsayilana don)
 
 ### FAZ 5: Buyume (Hafta 8+)
-- [ ] Landing page (SEO)
-- [ ] Blog icerikleri
-- [ ] Referans sistemi
-- [ ] Reklam kampanyalari
+- [x] SEO-optimized landing page (JSON-LD, OpenGraph, sosyal kanit, SSS, testimonials)
+- [x] Blog altyapisi (3 SEO makale, statik olusum, article schema)
+- [x] Referans sistemi (davet linki, odul takibi, WhatsApp paylasim)
+- [x] sitemap.xml ve robots.txt (otomatik olusum)
+- [ ] Reklam kampanyalari (Google Ads, Facebook - deploy sonrasi)
 
 ---
 
@@ -165,6 +171,8 @@ src/
     (dashboard)/panel/     - Ana dashboard
     (dashboard)/faturalar/ - Fatura yonetimi
     (dashboard)/musteriler/- Musteri yonetimi
+    (dashboard)/hatirlatmalar/ - Hatirlatma gecmisi
+    (dashboard)/fiyatlandirma/ - Plan secimi ve odeme
     (dashboard)/ayarlar/   - Profil ayarlari
     api/                   - API routes
     layout.tsx
@@ -177,6 +185,7 @@ src/
   lib/
     supabase/              - Supabase client/server
     messaging/             - WhatsApp/SMS/Email
+    payments/              - iyzico + plan yonetimi
     utils/                 - Yardimci fonksiyonlar
   types/                   - TypeScript tipleri
   hooks/                   - Custom hooks
