@@ -115,7 +115,7 @@ export default function SifreSifirlaPage() {
             </p>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4 pb-8">
+        <CardContent className="space-y-4 pb-8" suppressHydrationWarning>
           {mode === "request" ? (
             <>
               <div className="space-y-1.5">

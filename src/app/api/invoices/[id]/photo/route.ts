@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getRequestUserId, unauthorizedResponse } from "@/lib/supabase/auth";
 import {
-  attachPublicPhotoUrl,
+  attachSignedPhotoUrl,
   PHOTO_BUCKET,
 } from "@/lib/invoices/photos";
 import { uuidParamsSchema } from "@/lib/validation/common";
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       `customers:${userId}`,
     ]);
 
-    const photoResult = await attachPublicPhotoUrl({ photo_url: filePath });
+    const photoResult = await attachSignedPhotoUrl({ photo_url: filePath });
 
     return NextResponse.json(photoResult, { status: 201 });
   } catch (err) {

@@ -1,4 +1,4 @@
-import type { DashboardStats, Profile } from "@/types/index";
+import type { Profile } from "@/types/index";
 
 export interface OnboardingStep {
   key: "profile" | "customer" | "invoice" | "reminder";
@@ -8,9 +8,15 @@ export interface OnboardingStep {
   completed: boolean;
 }
 
+interface OnboardingStats {
+  totalCustomers: number;
+  totalInvoices: number;
+  remindersSentThisMonth: number;
+}
+
 export function getOnboardingSteps(params: {
   profile: Profile | null;
-  stats: DashboardStats | null;
+  stats: OnboardingStats | null;
 }) {
   const { profile, stats } = params;
 

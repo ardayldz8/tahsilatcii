@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { internalError, notFound } from "@/lib/api/errors";
 import { parseJsonBody, parseRouteParams } from "@/lib/api/validation";
 import { safeRevalidateTags } from "@/lib/cache";
-import { attachPublicPhotoUrl } from "@/lib/invoices/photos";
+import { attachSignedPhotoUrl } from "@/lib/invoices/photos";
 import { createClient } from "@/lib/supabase/server";
 import { getRequestUserId, unauthorizedResponse } from "@/lib/supabase/auth";
 import { uuidParamsSchema } from "@/lib/validation/common";
@@ -32,7 +32,7 @@ export async function GET(
 
     if (error || !data) return notFound("Invoice not found");
 
-    return NextResponse.json(await attachPublicPhotoUrl(data));
+    return NextResponse.json(await attachSignedPhotoUrl(data));
   } catch {
     return internalError();
   }
@@ -105,7 +105,7 @@ export async function PUT(
       `customers:${userId}`,
     ]);
 
-    return NextResponse.json(await attachPublicPhotoUrl(data));
+    return NextResponse.json(await attachSignedPhotoUrl(data));
   } catch {
     return internalError();
   }

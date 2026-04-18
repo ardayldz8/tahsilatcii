@@ -83,13 +83,13 @@ export default function GirisPage() {
             Hesabiniza giris yapin
           </p>
         </CardHeader>
-        <CardContent className="pb-8">
+        <CardContent className="pb-8" suppressHydrationWarning>
           {verificationNotice && (
             <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
               {verificationNotice}
             </div>
           )}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" suppressHydrationWarning>
             <div className="space-y-1.5">
               <Label htmlFor="email">E-posta</Label>
               <Input

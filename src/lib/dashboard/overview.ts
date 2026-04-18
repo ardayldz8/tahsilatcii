@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { attachPublicPhotoUrls } from "@/lib/invoices/photos";
+import { attachSignedPhotoUrls } from "@/lib/invoices/photos";
 import type { createClient } from "@/lib/supabase/server";
 import type { Invoice } from "@/types/index";
 import {
@@ -19,7 +19,20 @@ export interface DashboardReferralSummary {
   reward: string;
 }
 
-export async function getDashboardOverview(
+export interface DashboardCoreStats {
+  totalCustomers: number;
+  totalInvoices: number;
+  pendingAmount: number;
+  collectedAmount: number;
+  overdueCount: number;
+  remindersSentThisMonth: number;
+}
+
+/**
+ * Core dashboard data — fast counts + sums. Renders the plan card,
+ * onboarding card, and 5 stat cards immediately.
+ */
+export async function getDashboardCore(
   supabase: SupabaseClient,
   userId: string
 ) {
@@ -34,8 +47,7 @@ export async function getDashboardOverview(
     paidInvoicesResult,
     overdueResult,
     remindersResult,
-    allInvoicesResult,
-    latestInvoicesResult,
+    totalInvoicesResult,
     referralsResult,
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", userId).single(),
@@ -65,16 +77,8 @@ export async function getDashboardOverview(
       .gte("created_at", startOfMonth.toISOString()),
     supabase
       .from("invoices")
-      .select("amount, status, due_date, paid_at, customer_id, customers(name)")
+      .select("*", { count: "exact", head: true })
       .eq("user_id", userId),
-    supabase
-      .from("invoices")
-      .select(
-        "id, user_id, customer_id, invoice_no, amount, due_date, status, notes, photo_url, created_at, updated_at, paid_at, customer:customers(name, phone)"
-      )
-      .eq("user_id", userId)
-      .order("due_date", { ascending: false })
-      .limit(10),
     supabase
       .from("referrals")
       .select("status, reward_type")
@@ -85,29 +89,74 @@ export async function getDashboardOverview(
     return null;
   }
 
-  if (
-    customersResult.error ||
-    pendingInvoicesResult.error ||
-    paidInvoicesResult.error ||
-    overdueResult.error ||
-    remindersResult.error ||
-    allInvoicesResult.error ||
-    latestInvoicesResult.error ||
-    referralsResult.error
-  ) {
-    throw new Error("Dashboard data could not be loaded");
-  }
-
-  const totalCustomers = customersResult.count ?? 0;
   const pendingAmount =
     pendingInvoicesResult.data?.reduce((sum, inv) => sum + inv.amount, 0) ?? 0;
   const collectedAmount =
     paidInvoicesResult.data?.reduce((sum, inv) => sum + inv.amount, 0) ?? 0;
-  const overdueCount = overdueResult.count ?? 0;
-  const remindersSentThisMonth = remindersResult.count ?? 0;
-  const allInvoices = allInvoicesResult.data ?? [];
   const referrals = referralsResult.data ?? [];
-  const latestInvoices: Invoice[] = await attachPublicPhotoUrls(
+
+  const stats: DashboardCoreStats = {
+    totalCustomers: customersResult.count ?? 0,
+    totalInvoices: totalInvoicesResult.count ?? 0,
+    pendingAmount,
+    collectedAmount,
+    overdueCount: overdueResult.count ?? 0,
+    remindersSentThisMonth: remindersResult.count ?? 0,
+  };
+
+  return {
+    profile: profileResult.data,
+    stats,
+    referrals: {
+      code: profileResult.data.referral_code || "",
+      total: referrals.length,
+      completed: referrals.filter((r) => r.status === "completed").length,
+      reward: `${referrals.filter((r) => r.reward_type === "granted").length} ay`,
+    } satisfies DashboardReferralSummary,
+  };
+}
+
+export async function getCachedDashboardCore(userId: string) {
+  return unstable_cache(
+    async () => getDashboardCore(createAdminClient(), userId),
+    ["dashboard-core", userId],
+    {
+      revalidate: 15,
+      tags: [`dashboard:${userId}`, `invoices:${userId}`, `customers:${userId}`],
+    }
+  )();
+}
+
+/**
+ * Heavy dashboard data — chart datasets + latest invoices with signed photo URLs.
+ * Streamed via <Suspense> so it doesn't block the initial paint.
+ */
+export async function getDashboardDeep(
+  supabase: SupabaseClient,
+  userId: string
+) {
+  const [allInvoicesResult, latestInvoicesResult] = await Promise.all([
+    supabase
+      .from("invoices")
+      .select("amount, status, due_date, paid_at, customer_id, customers(name)")
+      .eq("user_id", userId),
+    supabase
+      .from("invoices")
+      .select(
+        "id, user_id, customer_id, invoice_no, amount, due_date, status, notes, photo_url, created_at, updated_at, paid_at, customer:customers(name, phone)"
+      )
+      .eq("user_id", userId)
+      .order("due_date", { ascending: false })
+      .limit(10),
+  ]);
+
+  if (allInvoicesResult.error || latestInvoicesResult.error) {
+    throw new Error("Dashboard deep data could not be loaded");
+  }
+
+  const allInvoices = allInvoicesResult.data ?? [];
+
+  const latestInvoices: Invoice[] = await attachSignedPhotoUrls(
     (latestInvoicesResult.data ?? []).map((invoice) => ({
       ...invoice,
       customer: Array.isArray(invoice.customer)
@@ -128,26 +177,43 @@ export async function getDashboardOverview(
   );
 
   return {
-    profile: profileResult.data,
-    stats: {
-      totalCustomers,
-      totalInvoices: allInvoices.length,
-      pendingAmount,
-      collectedAmount,
-      overdueCount,
-      remindersSentThisMonth,
+    chartData: {
       monthlyRevenue: buildMonthlyRevenue(allInvoices),
       invoiceStatusData: buildInvoiceStatusData(allInvoices),
       collectionRateData: buildCollectionRateData(allInvoices),
       topCustomers: buildTopCustomers(allInvoices),
     },
     invoices: latestInvoices,
-    referrals: {
-      code: profileResult.data.referral_code || "",
-      total: referrals.length,
-      completed: referrals.filter((r) => r.status === "completed").length,
-      reward: `${referrals.filter((r) => r.reward_type === "granted").length} ay`,
-    } satisfies DashboardReferralSummary,
+  };
+}
+
+export async function getCachedDashboardDeep(userId: string) {
+  return unstable_cache(
+    async () => getDashboardDeep(createAdminClient(), userId),
+    ["dashboard-deep", userId],
+    {
+      revalidate: 15,
+      tags: [`dashboard:${userId}`, `invoices:${userId}`, `customers:${userId}`],
+    }
+  )();
+}
+
+/**
+ * @deprecated Prefer getCachedDashboardCore + <Suspense> + getCachedDashboardDeep
+ * for streaming. Kept for any callers still relying on the combined payload.
+ */
+export async function getDashboardOverview(
+  supabase: SupabaseClient,
+  userId: string
+) {
+  const core = await getDashboardCore(supabase, userId);
+  if (!core) return null;
+  const deep = await getDashboardDeep(supabase, userId);
+  return {
+    profile: core.profile,
+    stats: { ...core.stats, ...deep.chartData },
+    invoices: deep.invoices,
+    referrals: core.referrals,
   };
 }
 

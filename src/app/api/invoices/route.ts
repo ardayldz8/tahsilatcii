@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { internalError, notFound } from "@/lib/api/errors";
 import { parseJsonBody, parseSearchParams } from "@/lib/api/validation";
-import { attachPublicPhotoUrl, attachPublicPhotoUrls } from "@/lib/invoices/photos";
+import { attachSignedPhotoUrl, attachSignedPhotoUrls } from "@/lib/invoices/photos";
 import { getCachedInvoicesBootstrap } from "@/lib/invoices/bootstrap";
 import { generateInvoiceNo } from "@/lib/invoices/helpers";
 import { safeRevalidateTags } from "@/lib/cache";
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     if (error) return internalError(error.message);
 
     return NextResponse.json(
-      await attachPublicPhotoUrls((data ?? []) as unknown as Array<{ photo_url: string | null }>)
+      await attachSignedPhotoUrls((data ?? []) as unknown as Array<{ photo_url: string | null }>)
     );
   } catch {
     return internalError();
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       `customers:${userId}`,
     ]);
 
-    return NextResponse.json(await attachPublicPhotoUrl(data), { status: 201 });
+    return NextResponse.json(await attachSignedPhotoUrl(data), { status: 201 });
   } catch {
     return internalError();
   }

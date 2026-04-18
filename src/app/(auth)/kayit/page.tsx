@@ -130,13 +130,13 @@ export default function KayitPage() {
             Ucretsiz hesap olusturun
           </p>
         </CardHeader>
-        <CardContent className="pb-8">
+        <CardContent className="pb-8" suppressHydrationWarning>
           {awaitingVerification && (
             <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
               {awaitingVerification} adresine dogrulama e-postasi gonderildi.
             </div>
           )}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" suppressHydrationWarning>
             <div className="space-y-1.5">
               <Label htmlFor="name">Ad Soyad</Label>
               <Input

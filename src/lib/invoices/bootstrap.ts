@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { attachPublicPhotoUrls } from "@/lib/invoices/photos";
+import { attachSignedPhotoUrls } from "@/lib/invoices/photos";
 import type { Invoice } from "@/types/index";
 
 export async function getInvoicesBootstrap(userId: string): Promise<Invoice[]> {
@@ -13,7 +13,7 @@ export async function getInvoicesBootstrap(userId: string): Promise<Invoice[]> {
     .eq("user_id", userId)
     .order("due_date", { ascending: false });
 
-  return attachPublicPhotoUrls((invoices ?? []).map((invoice) => ({
+  return attachSignedPhotoUrls((invoices ?? []).map((invoice) => ({
     ...invoice,
     customer: Array.isArray(invoice.customer)
       ? {

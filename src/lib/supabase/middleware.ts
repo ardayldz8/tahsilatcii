@@ -1,28 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-interface SessionCache {
-  userId: string | null;
-  timestamp: number;
-}
-
-const sessionCache = new Map<string, SessionCache>();
-const CACHE_TTL_MS = 60_000;
-
-function getCachedUser(sessionKey: string): string | null | undefined {
-  const cached = sessionCache.get(sessionKey);
-  if (!cached) return undefined;
-  if (Date.now() - cached.timestamp > CACHE_TTL_MS) {
-    sessionCache.delete(sessionKey);
-    return undefined;
-  }
-  return cached.userId;
-}
-
-function setCachedUser(sessionKey: string, userId: string | null) {
-  sessionCache.set(sessionKey, { userId, timestamp: Date.now() });
-}
-
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -50,20 +28,10 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const sessionKey = request.cookies.getAll().find((c) => c.name === "sb-access-token")?.value
-    ?? request.cookies.getAll().find((c) => c.name === "supabase-auth-token")?.value
-    ?? "anonymous";
-
-  const cachedUserId = getCachedUser(sessionKey);
-
-  let userId: string | null;
-  if (cachedUserId !== undefined) {
-    userId = cachedUserId;
-  } else {
-    const { data: { user } } = await supabase.auth.getUser();
-    userId = user?.id ?? null;
-    setCachedUser(sessionKey, userId);
-  }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userId = user?.id ?? null;
 
   const protectedPaths = [
     "/panel",

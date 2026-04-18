@@ -44,24 +44,6 @@ export function resolveInvoicePhotoPath(photoUrl: string | null | undefined) {
   return null;
 }
 
-export function createInvoicePublicUrl(photoUrl: string | null | undefined) {
-  if (!photoUrl) {
-    return null;
-  }
-
-  const photoPath = resolveInvoicePhotoPath(photoUrl);
-  if (!photoPath) {
-    return photoUrl;
-  }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!supabaseUrl) {
-    return null;
-  }
-
-  return `${supabaseUrl}/storage/v1/object/public/${PHOTO_BUCKET}/${photoPath}`;
-}
-
 export async function createInvoicePhotoSignedUrl(photoUrl: string | null | undefined) {
   if (!photoUrl) {
     return null;
@@ -79,24 +61,13 @@ export async function createInvoicePhotoSignedUrl(photoUrl: string | null | unde
       .createSignedUrl(photoPath, SIGNED_URL_EXPIRES_IN_SECONDS);
 
     if (error || !data?.signedUrl) {
-      return createInvoicePublicUrl(photoUrl);
+      return null;
     }
 
     return data.signedUrl;
   } catch {
-    return createInvoicePublicUrl(photoUrl);
+    return null;
   }
-}
-
-export function attachPublicPhotoUrl<T extends { photo_url: string | null }>(item: T) {
-  return {
-    ...item,
-    photo_url: createInvoicePublicUrl(item.photo_url),
-  };
-}
-
-export function attachPublicPhotoUrls<T extends { photo_url: string | null }>(items: T[]) {
-  return Promise.all(items.map((item) => Promise.resolve(attachPublicPhotoUrl(item))));
 }
 
 export async function attachSignedPhotoUrl<T extends { photo_url: string | null }>(item: T) {

@@ -1,5 +1,5 @@
 import InvoicesPageClient from "@/components/dashboard/invoices-page-client";
-import { attachPublicPhotoUrls } from "@/lib/invoices/photos";
+import { attachSignedPhotoUrls } from "@/lib/invoices/photos";
 import { getRequestUserId } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Invoice } from "@/types/index";
@@ -22,7 +22,7 @@ export default async function FaturalarPage() {
 
   const initialInvoices: Invoice[] = error
     ? []
-    : await attachPublicPhotoUrls(
+    : await attachSignedPhotoUrls(
         ((data ?? []).map((invoice) => ({
           ...invoice,
           customer: Array.isArray(invoice.customer)

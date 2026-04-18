@@ -1,16 +1,14 @@
-import dynamic from "next/dynamic";
 import Navbar from "@/components/landing/navbar";
 import Hero from "@/components/landing/hero";
 import Footer from "@/components/landing/footer";
+import StatsStrip from "@/components/landing/stats-strip";
+import Features from "@/components/landing/features";
+import HowItWorks from "@/components/landing/how-it-works";
+import Testimonials from "@/components/landing/testimonials";
+import Pricing from "@/components/landing/pricing";
+import FAQ from "@/components/landing/faq";
+import FinalCTA from "@/components/landing/final-cta";
 import type { Metadata } from "next";
-
-const StatsStrip = dynamic(() => import("@/components/landing/stats-strip"));
-const Features = dynamic(() => import("@/components/landing/features"));
-const HowItWorks = dynamic(() => import("@/components/landing/how-it-works"));
-const Testimonials = dynamic(() => import("@/components/landing/testimonials"));
-const Pricing = dynamic(() => import("@/components/landing/pricing"));
-const FAQ = dynamic(() => import("@/components/landing/faq"));
-const FinalCTA = dynamic(() => import("@/components/landing/final-cta"));
 
 const jsonLd = {
   "@context": "https://schema.org",
